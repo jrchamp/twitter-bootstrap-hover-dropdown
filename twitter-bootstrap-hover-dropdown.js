@@ -36,7 +36,10 @@
                     instantlyCloseOthers: $(this).data('close-others')
                 },
                 settings = $.extend(true, {}, defaults, options, data),
-                timeout;
+                delayHideParent,
+                delayShowParent,
+                delayHideSelf,
+                delayShowSelf;
 
             $parent.hover(function(event) {
                 // so a neighbor can't open the dropdown
@@ -45,15 +48,19 @@
                 }
 
                 if(shouldHover) {
-                    if(settings.instantlyCloseOthers === true)
-                        $allDropdowns.removeClass('open');
+                    window.clearTimeout(delayHideParent);
+                    delayShowParent = window.setTimeout(function() {
+                        if(settings.instantlyCloseOthers === true) {
+                            $allDropdowns.removeClass('open');
+                        }
 
-                    window.clearTimeout(timeout);
-                    $parent.addClass('open');
+                        $parent.addClass('open');
+                    }, settings.delay);
                 }
             }, function() {
                 if(shouldHover) {
-                    timeout = window.setTimeout(function() {
+                    window.clearTimeout(delayShowParent);
+                    delayHideParent = window.setTimeout(function() {
                         $parent.removeClass('open');
                     }, settings.delay);
                 }
@@ -63,29 +70,44 @@
             // this helps with button groups!
             $this.hover(function() {
                 if(shouldHover) {
-                    if(settings.instantlyCloseOthers === true)
-                        $allDropdowns.removeClass('open');
+                    window.clearTimeout(delayHideSelf);
+                    delayShowSelf = window.setTimeout(function() {
+                        if(settings.instantlyCloseOthers === true) {
+                            $allDropdowns.removeClass('open');
+                        }
 
-                    window.clearTimeout(timeout);
-                    $parent.addClass('open');
+                        $parent.addClass('open');
+                    }, settings.delay);
                 }
+            }, function() {
+                if(shouldHover) {
+                    window.clearTimeout(delayShowSelf);
+                    delayHideSelf = window.setTimeout(function() {
+                        $parent.removeClass('open');
+                    }, settings.delay);
+                }
+
             });
 
             // handle submenus
             $parent.find('.dropdown-submenu').each(function(){
-                var $this = $(this);
-                var subTimeout;
+                var $this = $(this),
+                    subDelayHide,
+                    subDelayShow;
                 $this.hover(function() {
                     if(shouldHover) {
-                        window.clearTimeout(subTimeout);
-                        $this.children('.dropdown-menu').show();
-                        // always close submenu siblings instantly
-                        $this.siblings().children('.dropdown-menu').hide();
+                        window.clearTimeout(subDelayHide);
+                        subDelayShow = window.setTimeout(function() {
+                            $this.children('.dropdown-menu').show();
+                            // always close submenu siblings instantly
+                            $this.siblings().children('.dropdown-menu').hide();
+                        }, settings.delay);
                     }
                 }, function() {
                     var $submenu = $this.children('.dropdown-menu');
                     if(shouldHover) {
-                        subTimeout = window.setTimeout(function() {
+                        window.clearTimeout(subDelayShow);
+                        subDelayHide = window.setTimeout(function() {
                             $submenu.hide();
                         }, settings.delay);
                     } else {
